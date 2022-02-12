@@ -8,6 +8,9 @@
   },
   "dependencies": {
     "@tailwindcss/forms": "^0.4.0",
+    "connect-history-api-fallback": "^1.6.0",
+    "express": "^4.17.2",
+    "path": "^0.12.7",
     "tailwindcss-neumorphism": "^0.1.0",
     "vue": "^3.2.25"
   },
