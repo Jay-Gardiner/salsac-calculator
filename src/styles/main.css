@@ -49,13 +49,3 @@
   p {
     font-family: 'Montserrat', Helvetica, sans-serif;
   }
-
-  [type='text'], .boxDisplay {
-    background-color: #F8F6F5;
-  }
-
-  .boxDisplay {
-    border-width: 1px;
-    padding: 0.5rem 0.75rem;
-    appearance: none;
-  }

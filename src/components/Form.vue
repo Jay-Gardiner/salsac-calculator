@@ -4,7 +4,6 @@
     data () {
       return {
         salary: 0,
-        origSalary: 0,
         annualTax: 0,
         income: 0,
         payPeriodOptions: [
@@ -15,19 +14,21 @@
         ],
         payPeriod: 'monthly',
         costOfPurchase: 0,
-        numPaysToCompletePurchase: 0,
+        numPaysToCompletePurchase: 1,
         remainingIncome: 0,
         amountSavedOnTax: 0,
+        newAnnualTax: 0,
+        costPerPaycycle: 0
       }
     },
     created() {
       this.$watch('salary', (newVal) => {
         this.salary = newVal
-        this.origSalary = newVal
+        var totalSalary = this.salary
         if(newVal) {
-          this.annualTax = this.CalculateAnnualTax()
+          this.annualTax = this.CalculateAnnualTax(totalSalary)
           this.income = this.CalculateIncome()
-          console.log(this.annualTax)
+          // console.log(this.annualTax)
         }
       }),
       this.$watch('payPeriod', (newVal) => {
@@ -35,38 +36,42 @@
           this.payPeriod = newVal
           this.income = this.CalculateIncome()
           this.remainingIncome = this.CalculateRemainingIncome()
-          console.log(this.payPeriod)
+          // console.log(this.payPeriod)
+        }
+      }),
+      this.$watch('costOfPurchase', (newVal) => {
+        if(newVal) {
+          this.costOfPurchase = newVal
+          this.costPerPaycycle = this.CalculateCostPerPaycycle()
+          this.remainingIncome = this.CalculateRemainingIncome()
+          this.newAnnualTax = this.CalculateNewAnnualTax()
+          this.amountSavedOnTax = this.CalculateAmountSavedOnTax()
         }
       }),
       this.$watch('numPaysToCompletePurchase', (newVal) => {
         if(newVal) {
           this.numPaysToCompletePurchase = newVal
+          this.costPerPaycycle = this.CalculateCostPerPaycycle()
           this.remainingIncome = this.CalculateRemainingIncome()
-        }
-      })
-      this.$watch('costOfPurchase', (newVal) => {
-        if(newVal) {
-          this.costOfPurchase = newVal
-          this.amountSavedOnTax = this.CalculateAmountSavedOnTax()
         }
       })
     },
     methods: {
-      CalculateAnnualTax() {
+      CalculateAnnualTax(salary) {
         //Still need to account for Low income tax offset
         //and Low to middle income tax offset
-        var medicareLevy = this.salary * 0.02
+        var medicareLevy = salary * 0.02
 
-        if(this.salary < 18200) {
+        if(salary < 18200) {
           return Math.round(0 + medicareLevy)
-        } else if(this.salary > 18201 && this.salary < 45000) {
+        } else if(salary > 18201 && salary < 45000) {
           return Math.round(((this.salary - 18200) * 0.19) + medicareLevy)
-        } else if(this.salary > 45001 && this.salary < 120000) {
-          return Math.round((5092 + ((this.salary - 45001) * 0.325)) + medicareLevy)
-        } else if(this.salary > 120001 && this.salary < 180000) {
-          return Math.round((29467 + ((this.salary - 120001) * 0.37)) + medicareLevy)
-        } else if(this.salary > 180000) {
-          return Math.round((51667 + ((this.salary - 180000) * 0.45)) + medicareLevy)
+        } else if(salary > 45001 && salary < 120000) {
+          return Math.round((5092 + ((salary - 45001) * 0.325)) + medicareLevy)
+        } else if(salary > 120001 && salary < 180000) {
+          return Math.round((29467 + ((salary - 120001) * 0.37)) + medicareLevy)
+        } else if(salary > 180000) {
+          return Math.round((51667 + ((salary - 180000) * 0.45)) + medicareLevy)
         }
       },
       CalculateIncome() {
@@ -82,36 +87,22 @@
         }
       },
       CalculateRemainingIncome() {
-        if(this.payPeriod == "monthly") {
-          return Math.round(((((this.salary - this.annualTax) / 12) + Number.EPSILON) - (this.costOfPurchase/this.numPaysToCompletePurchase)) * 100) / 100
-        } else if(this.payPeriod == "biweekly") {
-          return Math.round(((((this.salary - this.annualTax) / 26) + Number.EPSILON) - (this.costOfPurchase/this.numPaysToCompletePurchase)) * 100) / 100
-        } else if(this.payPeriod == "weekly") {
-          return Math.round(((((this.salary - this.annualTax) / 52) + Number.EPSILON) - (this.costOfPurchase/this.numPaysToCompletePurchase)) * 100) / 100
-        } else if(this.payPeriod == "annually") {
-          return Math.round(((((this.salary - this.annualTax) / 1) + Number.EPSILON) - (this.costOfPurchase/this.numPaysToCompletePurchase)) * 100) / 100
-        }
+        return this.income - this.costPerPaycycle
       },
       CalculateAmountSavedOnTax() {
-        this.salary = this.origSalary - this.costOfPurchase
-
-        if(this.payPeriod == "monthly") {
-          let saved2 = Math.round(((this.CalculateAnnualTax()) + Number.EPSILON) * 100) / 100
-          this.salary = this.origSalary
-          return saved2
-        } else if(this.payPeriod == "biweekly") {
-          let saved2 = Math.round(((this.CalculateAnnualTax()) + Number.EPSILON) * 100) / 100
-          this.salary = this.origSalary
-          return saved2
-        } else if(this.payPeriod == "weekly") {
-          let saved2 = Math.round(((this.CalculateAnnualTax()) + Number.EPSILON) * 100) / 100
-          this.salary = this.origSalary
-          return saved2
-        } else if(this.payPeriod == "annually") {
-          let saved2 = Math.round(((this.CalculateAnnualTax()) + Number.EPSILON) * 100) / 100
-          this.salary = this.origSalary
-          return saved2
+        let amountSavedOnTax = this.newAnnualTax - this.annualTax
+        if(amountSavedOnTax < 0) {
+          return amountSavedOnTax * -1
+        } else {
+          return amountSavedOnTax
         }
+      },
+      CalculateCostPerPaycycle() {
+        return this.costOfPurchase / this.numPaysToCompletePurchase
+      },
+      CalculateNewAnnualTax() {
+        let newSalary = this.salary - this.costOfPurchase
+        return this.CalculateAnnualTax(newSalary)
       }
     }
   }
@@ -136,11 +127,11 @@
                 
                 <div class="col-span-3">
                   <label for="salary" class="block text-sm font-medium text-slate-300">Annual Salary</label>
-                  <input v-model.lazy="salary" type="text" name="salary" id="salary" class="boxDisplay mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
+                  <input v-model.lazy="salary" type="text" name="salary" id="salary" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
                 </div>
 
                 <div class="col-span-3">
-                  <label for="annual-tax" class="block text-sm font-medium text-slate-300">Annual Tax</label>
+                  <label for="annual-tax" class="block text-sm font-medium text-slate-300">Annual Tax (Roughly)</label>
                   <label id="annual-tax" class="boxDisplay mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">{{annualTax}}</label>
                 </div>
 
@@ -156,35 +147,41 @@
                   <label id="income" class="boxDisplay mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">{{income}}</label>
                 </div>
 
-                <div class="col-span-3">
+                <div class="col-span-2">
                   <label for="cost-of-purchase" class="block text-sm font-medium text-slate-300">Cost of Purchase</label>
                   <input v-model.lazy="costOfPurchase" placeholder="To the nearest whole dollar" type="text" name="cost-of-purchase" id="cost-of-purchase" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
                 </div>
 
-                <div class="col-span-3">
-                  <label for="purchase-payment-period" class="block text-sm font-medium text-slate-300">Number of pays to payoff purchase</label>
+                <div class="col-span-2">
+                  <label for="purchase-payment-period" class="block text-sm font-medium text-slate-300"># Paycycles To Payoff</label>
                   <input v-model="numPaysToCompletePurchase" type="text" name="purchase-payment-period" id="purchase-payment-period" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
                 </div>
 
-                <div class="col-span-6 sm:col-span-3 lg:col-span-2">
+                <div class="col-span-2">
+                  <label for="cost-per-paycycle" class="block text-sm font-medium text-slate-300">Cost Per Paycycle</label>
+                  <label id="cost-per-paycycle" class="boxDisplay mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">{{costPerPaycycle}}</label>
+                </div>
+
+                <div class="col-span-2">
+                  <label for="new-annual-tax" class="block text-sm font-medium text-slate-300">New Annual Tax</label>
+                  <label id="new-annual-tax" class="boxDisplay mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">{{newAnnualTax}}</label>
+                </div>
+
+                <div class="col-span-2">
                   <label for="tax-saved" class="block text-sm font-medium text-slate-300">Amount Saved on Tax</label>
                   <label id="tax-saved" class="boxDisplay mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">{{amountSavedOnTax}}</label>
                 </div>
 
-                <div class="col-span-6 sm:col-span-3 lg:col-span-2">
-                  <label for="new-annual-tax" class="block text-sm font-medium text-slate-300">New Annual Tax</label>
-                  <input type="text" name="new-annual-tax" id="new-annual-tax" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
-                </div>
-
-                <div class="col-span-6 sm:col-span-3 lg:col-span-2">
+                <div class="col-span-2">
                   <label for="remaining-income" class="block text-sm font-medium text-slate-300">Remaining Income</label>
                   <label id="remaining-income" class="boxDisplay mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">{{remainingIncome}}</label>
                 </div>
               </div>
             </div>
-            <div class="px-4 py-3 text-right sm:px-6">
+            <!-- Disabled for now. Updates occur dynamically. -->
+            <!-- <div class="px-4 py-3 text-right sm:px-6">
               <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-slate-300 bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Calculate</button>
-            </div>
+            </div> -->
           </div>
         </form>
       </div>
@@ -199,5 +196,15 @@
     background: #272626;
     box-shadow:  22px 22px 44px #1e1d1d,
                 -22px -22px 44px #302f2f;
-  };
+  }
+  [type='text'] {
+    background-color: #F8F6F5;
+  }
+
+  .boxDisplay {
+    border-width: 1px;
+    padding: 0.5rem 0.75rem;
+    appearance: none;
+    background-color: #eceae8da;
+  }
 </style>
