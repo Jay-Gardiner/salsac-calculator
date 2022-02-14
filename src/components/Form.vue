@@ -60,19 +60,24 @@
       CalculateAnnualTax(salary) {
         //Still need to account for Low income tax offset
         //and Low to middle income tax offset
+        let annualTax = 0
         var medicareLevy = salary * 0.02
 
         if(salary < 18200) {
-          return Math.round(0 + medicareLevy)
+          annualTax = Math.round(0 + medicareLevy)
         } else if(salary > 18201 && salary < 45000) {
-          return Math.round(((this.salary - 18200) * 0.19) + medicareLevy)
+          annualTax = Math.round(((this.salary - 18200) * 0.19) + medicareLevy)
         } else if(salary > 45001 && salary < 120000) {
-          return Math.round((5092 + ((salary - 45001) * 0.325)) + medicareLevy)
+          annualTax = Math.round((5092 + ((salary - 45001) * 0.325)) + medicareLevy)
         } else if(salary > 120001 && salary < 180000) {
-          return Math.round((29467 + ((salary - 120001) * 0.37)) + medicareLevy)
+          annualTax = Math.round((29467 + ((salary - 120001) * 0.37)) + medicareLevy)
         } else if(salary > 180000) {
-          return Math.round((51667 + ((salary - 180000) * 0.45)) + medicareLevy)
+          annualTax = Math.round((51667 + ((salary - 180000) * 0.45)) + medicareLevy)
         }
+        annualTax -= this.AddLowIncomeTaxOffset(salary)
+        annualTax -= this.AddLowToMiddleIncomeTaxOffset(salary)
+
+        return annualTax
       },
       CalculateIncome() {
         //The really gross Math.round() lines are to make sure the numbers are rounded to the nearest 2 decimal places. Sorry.
@@ -87,7 +92,7 @@
         }
       },
       CalculateRemainingIncome() {
-        return this.income - this.costPerPaycycle
+        return Math.round(((this.income - this.costPerPaycycle) + Number.EPSILON) * 100) / 100
       },
       CalculateAmountSavedOnTax() {
         let amountSavedOnTax = this.newAnnualTax - this.annualTax
@@ -98,11 +103,38 @@
         }
       },
       CalculateCostPerPaycycle() {
-        return this.costOfPurchase / this.numPaysToCompletePurchase
+        return Math.round(((this.costOfPurchase / this.numPaysToCompletePurchase) + Number.EPSILON) * 100) / 100
       },
       CalculateNewAnnualTax() {
         let newSalary = this.salary - this.costOfPurchase
         return this.CalculateAnnualTax(newSalary)
+      },
+      AddLowIncomeTaxOffset(salary) {
+        let lowIncomeTaxOffset = 0
+        if(salary < 37500) {
+          lowIncomeTaxOffset = 700
+        } else if (salary > 37501 && salary < 45000) {
+          lowIncomeTaxOffset = 700 - ((45000 - 37500) * 0.05)
+        } else if (salary > 450001 && salary < 66667) {
+          lowIncomeTaxOffset = 325 - ((66667 - 450001) * 0.015)
+        }
+        return lowIncomeTaxOffset
+      },
+      AddLowToMiddleIncomeTaxOffset(salary) {
+        let lowToMiddleIncomeTaxOffset = 0
+        if(salary < 37000) {
+          lowToMiddleIncomeTaxOffset = 255
+        } else if (salary > 37001 && salary < 48000) {
+          lowToMiddleIncomeTaxOffset = 255 + ((48000 - 37000) * 0.075)
+          if(lowToMiddleIncomeTaxOffset > 1080) {
+            lowToMiddleIncomeTaxOffset = 1080
+          }
+        } else if (salary > 48001 && salary < 90000) {
+          lowToMiddleIncomeTaxOffset = 1080
+        } else if (salary > 90001 && salary < 126000) {
+          lowToMiddleIncomeTaxOffset = 1080 - ((126000 - 90000) * 0.03)
+        }
+        return lowToMiddleIncomeTaxOffset
       }
     }
   }
@@ -117,6 +149,7 @@
           <h3 class="text-lg font-medium leading-6 text-white">Salary Sacrifice Calculator</h3>
           <p class="mt-1 text-sm text-slate-300">Use this form to calculate your potential tax savings by making purchases through a salary sacrifice instead of purchasing something after getting paid.</p>
           <p class="mt-1 text-sm text-slate-300">This calculator is an estimate (and a very rough one at that) and should only be used as a guide on potential salary sacrifice savings.</p>
+          <p class="mt-4 text-lg text-red-600" v-if="remainingIncome < 0">You can't afford this lmao</p>
         </div>
       </div>
       <div class="mt-5 md:mt-0 md:col-span-2">
@@ -205,6 +238,6 @@
     border-width: 1px;
     padding: 0.5rem 0.75rem;
     appearance: none;
-    background-color: #eceae8da;
+    background-color: #ABABAB;
   }
 </style>
