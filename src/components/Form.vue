@@ -152,7 +152,7 @@
           <h3 class="text-lg font-medium leading-6 text-white">Salary Sacrifice Calculator</h3>
           <p class="mt-1 text-sm text-slate-300">Use this form to calculate your potential tax savings by making purchases through a salary sacrifice instead of purchasing something after getting paid.</p>
           <p class="mt-1 text-sm text-slate-300">This calculator is an estimate (and a very rough one at that) and should only be used as a guide on potential salary sacrifice savings.</p>
-          <p class="mt-4 text-lg text-red-600" v-if="remainingIncome < 0">You can't afford this lmao</p>
+          <p class="mt-4 text-lg text-red-600" v-if="remainingIncome < income * 0.3">You can't afford this lmao<br>Remaining income less than 30% of your total income</p>
         </div>
       </div>
       <div class="mt-5 md:mt-0 md:col-span-2">
