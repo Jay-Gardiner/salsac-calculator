@@ -28,6 +28,9 @@
         if(newVal) {
           this.annualTax = this.CalculateAnnualTax(totalSalary)
           this.income = this.CalculateIncome()
+          this.remainingIncome = this.CalculateRemainingIncome()
+          this.newAnnualTax = this.CalculateNewAnnualTax()
+          this.amountSavedOnTax = this.CalculateAmountSavedOnTax()
           // console.log(this.annualTax)
         }
       }),
